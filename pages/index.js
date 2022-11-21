@@ -1,65 +1,86 @@
-import Head from 'next/head'
 
-export default function Home() {
+import Head from "next/head";
+const axios = require("axios");
+
+const Home = ({ randomQuote, error }) => {
+  if (error) {
+    return <div>An error occured: {error.message}</div>;
+  }
   return (
-    <div className="container">
+    <div className='container'>
       <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>Welcome</title>
+        <link rel='icon' href='/favicon.ico' />
       </Head>
 
       <main>
-        <h1 className="title">
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+        <h1 className='title'>Welcome!</h1>
+        <h3 className='footer'>
+          Subscribe and Receive Inspirational Quotes Daily
+        </h3>
 
-        <p className="description">
-          Get started by editing <code>pages/index.js</code>
-        </p>
+        <p>Daily emails will look like this:</p>
+        <div className='card'>
+          <span>
+            <p>{randomQuote.quote}</p>
+            <blockquote>by {randomQuote.author}</blockquote>
+          </span>
+        </div>
 
-        <div className="grid">
-          <a href="https://nextjs.org/docs" className="card">
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+        <div className='grid'>
+          <form onSubmit={sendMessage}>
+            <label htmlFor='from'>Name: </label>
+            <input
+              id='name'
+              name='name'
+              type='text'
+              autoComplete='from'
+              required
+            />
 
-          <a href="https://nextjs.org/learn" className="card">
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+            <label htmlFor='subject'>Email: </label>
+            <input id='email' name='email' type='text' required />
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className="card"
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="card"
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+            <label htmlFor='message'>Message: </label>
+            <input id='message' name='message' type='text' required />
+            <button className='button' type='submit'>
+              Subscribe
+            </button>
+          </form>
         </div>
       </main>
 
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel" className="logo" />
-        </a>
-      </footer>
+      <footer>Powered by Awesomness</footer>
 
       <style jsx>{`
+        /* Style inputs */
+        input[type="text"],
+        select {
+          width: 100%;
+          padding: 12px 20px;
+          margin: 8px 0;
+          display: inline-block;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+        }
+
+        /* Style the submit button */
+        input[type="submit"] {
+          width: 100%;
+          background-color: #04aa6d;
+          color: white;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        /* Add a background color to the submit button on mouse-over */
+        input[type="submit"]:hover {
+          background-color: #45a049;
+        }
         .container {
           min-height: 100vh;
           padding: 0 0.5rem;
@@ -147,7 +168,16 @@ export default function Home() {
           max-width: 800px;
           margin-top: 3rem;
         }
-
+        .button {
+          width: 100%;
+          background-color: #04aa6d;
+          color: white;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
         .card {
           margin: 1rem;
           flex-basis: 45%;
@@ -205,5 +235,41 @@ export default function Home() {
         }
       `}</style>
     </div>
-  )
-}
+  );
+};
+
+const sendMessage = async (event) => {
+  event.preventDefault();
+  await axios
+    .post(
+      "https://vkyh2s23c7.execute-api.ap-south-1.amazonaws.com/dev/static-mailer",
+      {
+        name: event.target.name.value,
+        email: event.target.email.value,
+        message: event.target.message.value,
+      }
+    )
+    .then(function (res) {
+      console.log(res);
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+};
+Home.getInitialProps = async (ctx) => {
+  try {
+    const res = await axios.get(
+      "https://vkyh2s23c7.execute-api.ap-south-1.amazonaws.com/dev/quotes"
+    );
+    const quotes = res.data;
+
+    let listLength = quotes.quotes.length;
+    let randomQuote = quotes.quotes[Math.floor(Math.random() * listLength)];
+    console.log("RAN:::", quotes);
+    return { randomQuote };
+  } catch (error) {
+    return { error };
+  }
+};
+
+export default Home;
